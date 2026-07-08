@@ -584,7 +584,13 @@ if (signupForm) {
             return;
         }
 
-        saveStoredData("financeVerseUser", { name: name, email: email, phone: phone, password: password });
+        var userData = { name: name, email: email, phone: phone, password: password };
+        saveStoredData("financeVerseUser", userData);
+        if (typeof db !== "undefined") {
+            db.collection("users").where("email", "==", email).get().then(function (snap) {
+                if (snap.empty) { db.collection("users").add(userData); }
+            });
+        }
         result.textContent = "Signup successful. You can login now.";
     });
 }
@@ -682,10 +688,18 @@ if (supportForm) {
             date: new Date().toLocaleString()
         };
 
-        const tickets = getStoredData("supportTickets", []);
-        tickets.push(ticket);
-        saveStoredData("supportTickets", tickets);
-        result.textContent = `Ticket created: ${ticketId} | Status: Pending`;
+        if (typeof db !== "undefined") {
+            db.collection("tickets").add(ticket).then(function () {
+                result.textContent = "Ticket created: " + ticketId + " | Status: Pending";
+            }).catch(function () {
+                result.textContent = "Error creating ticket. Try again.";
+            });
+        } else {
+            const tickets = getStoredData("supportTickets", []);
+            tickets.push(ticket);
+            saveStoredData("supportTickets", tickets);
+            result.textContent = "Ticket created: " + ticketId + " | Status: Pending";
+        }
         supportForm.reset();
     });
 }
@@ -870,17 +884,17 @@ function renderSavingsChart() {
 
 /* Dashboard Data Display */
 function updateTicketStatus(ticketId, status) {
-    var tickets = getStoredData("supportTickets", []);
-    var updatedTickets = tickets.map(function (ticket) {
-        if (ticket.ticketId === ticketId) {
-            ticket.status = status;
-        }
-        return ticket;
-    });
-    saveStoredData("supportTickets", updatedTickets);
-    if (document.getElementById("profileBox")) {
-        renderDashboard();
+    if (typeof db !== "undefined") {
+        db.collection("tickets").doc(ticketId).update({ status: status }).catch(function () {});
+    } else {
+        var tickets = getStoredData("supportTickets", []);
+        tickets = tickets.map(function (ticket) {
+            if (ticket.ticketId === ticketId) { ticket.status = status; }
+            return ticket;
+        });
+        saveStoredData("supportTickets", tickets);
     }
+    if (document.getElementById("profileBox")) { renderDashboard(); }
 }
 
 function renderDashboard() {
@@ -1025,19 +1039,18 @@ try {
                     return;
                 }
 
-                var questions = getStoredData("finverseQuestions", []);
-                questions.push({
-                    id: Date.now(),
+                db.collection("questions").add({
                     name: name,
                     email: email,
                     message: message,
                     date: new Date().toLocaleString(),
                     status: "Pending",
                     userAgent: navigator.userAgent
+                }).then(function () {
+                    result.textContent = "Question sent! Admin will review it.";
+                }).catch(function () {
+                    result.textContent = "Error sending question. Try again.";
                 });
-                saveStoredData("finverseQuestions", questions);
-
-                result.textContent = "Question sent! Admin will review it.";
                 document.getElementById("qName").value = "";
                 document.getElementById("qEmail").value = "";
                 document.getElementById("qMessage").value = "";
