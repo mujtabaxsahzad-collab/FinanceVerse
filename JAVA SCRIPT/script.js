@@ -17,7 +17,12 @@ function saveStoredData(key, value) {
 /* Mobile Menu Toggle */
 const menuToggle = document.querySelector(".menu-toggle");
 const navLinks = document.querySelector(".nav-links");
-const currentPageName = window.location.pathname.split("/").pop() || "index.html";
+var currentPageName = window.location.pathname.split("/").pop() || "index.html";
+var currentPath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/") + 1);
+function pageUrl(file) {
+    if (currentPath.indexOf("HTML Files") !== -1) return file;
+    return "HTML Files/" + file;
+}
 
 if (menuToggle && navLinks) {
     menuToggle.addEventListener("click", function () {
@@ -33,7 +38,7 @@ function updateNavbarForLogin() {
 
     const authLinks = Array.from(navigation.querySelectorAll("a")).filter(function (link) {
         const page = link.getAttribute("href");
-        return page === "login.html" || page === "signup.html" || page === "dashboard.html" || page === "#";
+        return page && (page.indexOf("login") !== -1 || page.indexOf("signup") !== -1 || page.indexOf("dashboard") !== -1 || page === "#");
     });
 
     authLinks.forEach(function (link) {
@@ -43,7 +48,7 @@ function updateNavbarForLogin() {
 
     if (loggedInUser) {
         const dashboardItem = document.createElement("li");
-        dashboardItem.innerHTML = '<a href="dashboard.html" class="nav-button" id="dashboardLink">Dashboard</a>';
+        dashboardItem.innerHTML = '<a href="' + pageUrl('dashboard.html') + '" class="nav-button" id="dashboardLink">Dashboard</a>';
         navigation.appendChild(dashboardItem);
 
         const logoutItem = document.createElement("li");
@@ -51,7 +56,7 @@ function updateNavbarForLogin() {
         navigation.appendChild(logoutItem);
     } else {
         const loginItem = document.createElement("li");
-        loginItem.innerHTML = '<a href="login.html" class="nav-button" id="loginLink">Login</a>';
+        loginItem.innerHTML = '<a href="' + pageUrl('login.html') + '" class="nav-button" id="loginLink">Login</a>';
         navigation.appendChild(loginItem);
     }
 }
@@ -66,7 +71,7 @@ function updatePageButtonsForLogin() {
     pageLinks.forEach(function (link) {
         const href = link.getAttribute("href");
         const text = link.textContent.toLowerCase();
-        const isAuthButton = href === "signup.html" || href === "login.html";
+        const isAuthButton = href && (href.indexOf("signup") !== -1 || href.indexOf("login") !== -1);
         const isGetStartedButton = text.includes("get started") || text.includes("start learning") || text.includes("create free account");
 
         if (loggedInUser && (isAuthButton || isGetStartedButton)) {
@@ -83,7 +88,7 @@ function updatePageButtonsForLogin() {
         });
 
         if (loggedInUser && visibleButtons.length === 0 && !row.querySelector(".dashboard-cta")) {
-            row.innerHTML = '<a href="dashboard.html" class="primary-button dashboard-cta">Go to Dashboard</a>';
+            row.innerHTML = '<a href="' + pageUrl('dashboard.html') + '" class="primary-button dashboard-cta">Go to Dashboard</a>';
         }
     });
 }
@@ -143,7 +148,7 @@ document.addEventListener("click", function (event) {
     if (event.target.id === "logoutLink") {
         event.preventDefault();
         localStorage.removeItem("loggedInUser");
-        window.location.href = "login.html";
+        window.location.href = pageUrl("login.html");
     }
 });
 
@@ -158,11 +163,11 @@ document.querySelectorAll(".nav-links a").forEach(function (link) {
 
 /* Redirect Users Based On Login State */
 if ((currentPageName === "login.html" || currentPageName === "signup.html") && getStoredData("loggedInUser", null)) {
-    window.location.href = "dashboard.html";
+    window.location.href = pageUrl("dashboard.html");
 }
 
 if (currentPageName === "dashboard.html" && !getStoredData("loggedInUser", null)) {
-    window.location.href = "login.html";
+    window.location.href = pageUrl("login.html");
 }
 
 /* Global Search and Theme Tools */
