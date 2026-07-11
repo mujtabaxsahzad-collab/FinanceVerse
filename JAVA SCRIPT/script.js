@@ -18,7 +18,7 @@ function saveStoredData(key, value) {
 const menuToggle = document.querySelector(".menu-toggle");
 const navLinks = document.querySelector(".nav-links");
 var currentPageName = window.location.pathname.split("/").pop() || "index.html";
-var currentPath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/") + 1);
+var currentPath = decodeURIComponent(window.location.pathname.substring(0, window.location.pathname.lastIndexOf("/") + 1));
 function pageUrl(file) {
     if (currentPath.indexOf("HTML Files") !== -1) return file;
     return "HTML Files/" + file;
